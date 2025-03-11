@@ -1,0 +1,250 @@
+/* 基础样式设置 - 重置默认样式并设置全屏背景 */
+html, body {
+  padding: 0;
+  margin: 0;
+  width: 100%;
+  height: 100vh;   /* 使用视口高度单位，确保填满整个屏幕 */
+  overflow: hidden; /* 禁止滚动条 */
+  background: black; /* 默认黑色背景，防止加载时出现白色闪烁 */
+}
+
+/* 
+  主容器样式
+  这个容器覆盖整个屏幕，用于放置3D控制器和互动区域
+  z-index: 20 确保它位于背景之上，但在控制按钮之下
+*/
+.container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;           /* 使用flex布局居中内容 */
+  align-items: center;     /* 垂直居中 */
+  justify-content: center; /* 水平居中 */
+  z-index: 20;             /* 层级顺序 */
+}
+
+/* 
+  背景画布样式
+  用于渲染WebGL着色器效果，覆盖整个屏幕
+  z-index: 1 确保它位于最底层
+*/
+#background-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;              /* 最底层 */
+}
+
+/* 
+  迪斯科球画布样式
+  用于渲染3D迪斯科球，覆盖整个屏幕
+  z-index: 10 确保它位于背景之上，但在容器之下
+  pointer-events: none 确保它不会拦截鼠标事件
+*/
+#disco-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;             /* 中间层 */
+  pointer-events: none;    /* 忽略鼠标事件，让事件穿透到下层 */
+}
+
+/* 
+  互动区域样式
+  这是一个看不见的区域，但可以接收鼠标事件以控制3D场景
+  宽高设置为60%，确保不会太大或太小
+*/
+.overlay-block {
+  width: 60%;
+  height: 60%;
+  max-width: 600px;        /* 限制最大尺寸 */
+  max-height: 600px;
+  z-index: 30;             /* 确保在其他元素之上 */
+  pointer-events: auto;    /* 启用鼠标事件 */
+}
+
+/* 
+  开始按钮样式
+  位于屏幕中央，带有霓虹灯效果和毛玻璃背景
+*/
+#start-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);  /* 精确居中 */
+  padding: 16px 28px;                /* 内边距，使按钮更大 */
+  font-size: 18px;                   /* 字体大小 */
+  font-weight: bold;                 /* 粗体 */
+  cursor: pointer;                   /* 鼠标悬停时显示为手型 */
+  z-index: 100;                      /* 确保在最上层 */
+  
+  /* 半透明黑色背景 */
+  background: rgba(0, 0, 0, 0.4);
+  color: white;                      /* 白色文字 */
+  
+  /* 青色边框 */
+  border: 2px solid #00e0e0; 
+  border-radius: 8px;                /* 圆角边框 */
+  
+  /* 平滑过渡效果 */
+  transition: all 0.3s;
+  
+  /* 霓虹灯发光效果 - 青色和紫色阴影 */
+  box-shadow: 0 0 15px rgba(0, 224, 224, 0.6),  /* 青色阴影 */
+              0 0 25px rgba(176, 48, 192, 0.3);  /* 紫色阴影 */
+              
+  /* 毛玻璃效果 */
+  backdrop-filter: blur(5px);
+}
+
+/* 
+  开始按钮悬停效果
+  鼠标悬停时增强霓虹效果，并稍微放大按钮
+*/
+#start-btn:hover {
+  background: rgba(0, 0, 0, 0.6);       /* 更深的背景 */
+  
+  /* 增强的霓虹光效果 - 三色阴影 */
+  box-shadow: 0 0 20px rgba(0, 224, 224, 0.8),   /* 青色阴影 */
+              0 0 30px rgba(255, 138, 22, 0.5),   /* 橙色阴影 */
+              0 0 40px rgba(176, 48, 192, 0.4);  /* 紫色阴影 */
+              
+  /* 微小放大效果 */
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+/* 
+  定义三色脉动动画
+  创建颜色在青色、橙色和紫色之间循环变化的效果
+*/
+@keyframes threeColorPulse {
+  0% {
+    border-color: #00e0e0;                     /* 青色 */
+    box-shadow: 0 0 15px rgba(0, 224, 224, 0.6);
+  }
+  33% {
+    border-color: #ff8000;                     /* 橙色 */
+    box-shadow: 0 0 15px rgba(255, 128, 0, 0.6);
+  }
+  66% {
+    border-color: #b030c0;                     /* 紫色 */
+    box-shadow: 0 0 15px rgba(176, 48, 192, 0.6);
+  }
+  100% {
+    border-color: #00e0e0;                     /* 回到青色 */
+    box-shadow: 0 0 15px rgba(0, 224, 224, 0.6);
+  }
+}
+
+/* 
+  应用三色脉动动画到开始按钮
+  一个完整循环需要6秒，无限循环
+*/
+#start-btn {
+  animation: threeColorPulse 6s infinite;  /* 6秒一个循环，无限重复 */
+}
+
+/* 
+  手势状态指示器样式
+  显示手部跟踪状态
+*/
+#gesture-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 20px;
+  padding: 10px 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family:Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 100;
+  transition: all 0.3s;
+  backdrop-filter: blur(5px);
+  box-shadow: 0 0 15px rgba(0, 224, 224, 0.6);
+  min-width: 180px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+/* 指示器中的圆点 - 更大更明显 */
+.indicator-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #FF4136; /* 默认红色 */
+  transition: all 0.3s;
+  box-shadow: 0 0 5px rgba(255, 65, 54, 0.8);
+}
+
+/* 手势检测到时的圆点颜色 - 添加动画效果 */
+.indicator-dot.active {
+  background-color: #2ECC40; /* 变为绿色 */
+  box-shadow: 0 0 8px rgba(46, 204, 64, 0.8);
+  animation: pulse 1.5s infinite alternate;
+}
+
+/* 添加脉动动画 */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 8px rgba(46, 204, 64, 0.8);
+  }
+  100% {
+    transform: scale(1.2);
+    box-shadow: 0 0 12px rgba(46, 204, 64, 1);
+  }
+}
+
+/* 隐藏元素 */
+.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 音频控制区域样式 */
+#audio-controls {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 100;
+  transition: opacity 0.3s;
+}
+
+/* 音频按钮样式 */
+.audio-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(5px);
+}
+
+/* 活跃状态的音频按钮 */
+.audio-btn.active {
+  border-color: #00e0e0;
+  box-shadow: 0 0 10px rgba(0, 224, 224, 0.6);
+}
+
+/* 音频按钮悬停效果 */
+.audio-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
+}

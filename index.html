@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Disco</title>
+  <!-- 引入样式表 - 注意路径 -->
+  <link rel="stylesheet" href="./css/main.css">
+  <!-- 先引入GSAP库以确保其正确加载 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.4/gsap.min.js"></script>
+</head>
+<body>
+  <!-- 
+    背景画布 - 用于渲染WebGL着色器效果
+    这一层位于最底部，负责生成动态的背景图案
+  -->
+  <canvas id="background-canvas"></canvas>
+  
+  <!-- 
+    迪斯科球画布 - 用于渲染Three.js 3D场景
+    这一层位于中间，包含3D迪斯科球及其灯光效果
+  -->
+  <canvas id="disco-canvas"></canvas>
+  
+  <!-- 
+    容器 - 用于放置交互区域和控制相机视角
+    这一层位于最上层，接收用户输入并转化为3D场景的控制
+  -->
+  <div class="container"></div>
+  
+  <!-- 
+    开始按钮 - 用于请求麦克风和摄像头权限并开始音频和手势处理
+    点击后会请求用户授权访问麦克风和摄像头，然后隐藏自身
+  -->
+  <button id="start-btn">START</button>
+  
+  <!-- 
+    手势状态指示器 - 显示手势识别状态
+  -->
+  <div id="gesture-indicator" class="hidden">
+    <div class="indicator-dot"></div>
+    <span>Hand Tracking</span>
+  </div>
+  
+  <!-- 顶点着色器 - 用于WebGL背景 -->
+  <script type="x-shader/x-vertex">#version 300 es
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+    precision highp float;
+    #else
+    precision mediump float;
+    #endif
+
+    in vec2 position;
+
+    void main(void) {
+      gl_Position = vec4(position, 0, 1);
+    }
+  </script>
+
+  <!-- 片段着色器 - 用于WebGL背景 -->
+  <script type="x-shader/x-fragment">#version 300 es
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+out vec4 fragColor;
+
+// 基本变量
+uniform vec2 resolution;  // 屏幕分辨率
+uniform float time;       // 当前时间
+uniform float fade;       // 淡入淡出效果控制
+
+// 音频相关变量
+uniform float bassLevel;   // 低频响应 (0-1)
+uniform float midLevel;    // 中频响应 (0-1)
+uniform float trebleLevel; // 高频响应 (0-1)
+
+// 简化代码的宏定义
+#define T time
+#define S smoothstep
+#define TAU 6.2831853  // 2π
+
+// 伪随机数生成函数
+// 输入一个2D向量，输出一个0-1之间的随机值
+float rnd(vec2 p) {
+  return fract(sin(dot(p, p.yx + vec2(1234, 2345))) * 345678.);
+}
+
+// 三色霓虹色生成函数
+// 根据输入的时间值t生成在三种颜色之间平滑过渡的颜色
+vec3 triColorNeon(float t) {
+  // 三种基础颜色定义
+  vec3 orangeColor = vec3(0.95, 0.6, 0.2);   // 橙色
+  vec3 cyanColor = vec3(0.1, 0.85, 0.85);    // 青色 
+  vec3 purpleColor = vec3(0.7, 0.2, 0.8);    // 紫色偏粉
+
+  t = fract(t * 0.5); // 减慢颜色变化速度
+  
+  // 根据t的值在三种颜色之间平滑过渡
+  if(t < 0.33) {
+    return mix(orangeColor, cyanColor, S(0.0, 0.33, t) * 3.0);
+  } else if(t < 0.67) {
+    return mix(cyanColor, purpleColor, S(0.33, 0.67, t) * 3.0);
+  } else {
+    return mix(purpleColor, orangeColor, S(0.67, 1.0, t) * 3.0);
+  }
+}
+
+// 网格效果生成函数
+// 根据输入的UV坐标生成带有音频响应的网格效果
+vec3 grid(vec2 uv) {
+  vec3 col = vec3(0);
+  
+  // 使用低频控制网格大小 - 减小音频影响系数
+  float gridSize = 1.2 + bassLevel * 0.2; // 从0.5减至0.2，减少网格大小变化
+  vec2 g = abs(mod(uv, gridSize) - .5 * gridSize);
+  
+  // 使用三色霓虹效果设置网格颜色
+  float gridTime = T * 0.12;
+  vec3 gridColor = triColorNeon(gridTime);
+  
+  // 使用中频控制网格线的亮度 - 减小影响系数
+  float lineThickness = 0.08 + midLevel * 0.02; // 从0.04减至0.02
+  col = mix(gridColor, vec3(0), S(lineThickness, .0, min(g.x, g.y)));
+  
+  // 使用高频控制网格的透明度 - 减小影响系数
+  float gridOpacity = 0.125 + trebleLevel * 0.1; // 从0.2减至0.1
+  col = min(col, mix(gridColor, vec3(0), gridOpacity));
+  return col;
+}
+
+// 主函数 - 每个像素执行
+void main(void) {
+  // 将像素坐标转换为标准化UV坐标 (-1到1范围)
+  vec2 uv = (gl_FragCoord.xy - .5 * resolution) / min(resolution.x, resolution.y);
+  
+  // 使用低频控制整体缩放 - 减小影响系数
+  float zoom = 48.7 + bassLevel * 10.0;// 从20.0减至10.0
+  uv *= zoom;
+  
+  // 生成网格效果作为基础
+  vec3 col = grid(uv);
+
+  // 基础速度受低频影响 - 减小影响系数
+  float timeSpeed = 0.1 + bassLevel * 0.1; // 从0.2减至0.1
+  
+  // 计算波纹效果 - 结合时间和位置创建动态波纹
+  // 使用平滑插值函数让波纹变化更柔和
+  float d = length(vec2(log(length(uv)) - T * timeSpeed, atan(abs(uv.y), abs(uv.y)) / TAU));
+  
+  // 使用中频控制波纹效果的强度 - 减小影响系数并使用smoothstep让变化更平滑
+  float waveIntensity = sin(d * dot(col, col) + midLevel * 2.5) - 0.05; // 从5.0减至2.5
+  d = abs(waveIntensity);
+  
+  // 使用高频控制亮度和对比度 - 减小影响系数
+  d = pow(0.3 / d, 0.75 + trebleLevel * 0.15); // 从0.3减至0.15
+  d = max(0.0, d * mix(0.75, 1., rnd(uv)));
+
+  // 使用三色霓虹效果，受音频影响，创建动态颜色变化 - 减小影响系数
+  float timeOffset = T * 0.15 + bassLevel * 0.1; // 从0.2减至0.1
+  vec3 neonColor = triColorNeon(timeOffset + length(uv) * (0.008 + midLevel * 0.005)); // 从0.01减至0.005
+  
+  // 将波纹效果混合到颜色中
+  col *= mix(d, 1., 1. - min(1., S(0.7, 0.8, T * 0.4)));
+  
+  // 使用所有频段综合强度来控制颜色混合 - 减小影响系数
+  float audioIntensity = 0.6 + (bassLevel + midLevel + trebleLevel) * 0.05; // 从0.1减至0.05
+  col = mix(col, neonColor * 0.8, audioIntensity); 
+  
+  // 创建光圈从内向外发散效果，受中频控制 - 减小影响系数，让变化更柔和
+  float pulseSpeed = 0.2 + midLevel * 0.3; // 从0.6减至0.3
+  col = mix(col, vec3(1), S(0.9, 1., fade * fade));                      // 添加亮度
+  col = mix(col, vec3(0), 1. - min(1., S(0.5, 0.8, T * pulseSpeed)));    // 创建扩散效果
+
+  // 输出最终颜色
+  fragColor = vec4(col, 1);
+}
+  </script>
+  
+  <!-- 引入JavaScript主文件和手势控制模块 -->
+  <script type="module" src="./js/gesture.js"></script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
