@@ -70,56 +70,6 @@ html, body {
 }
 
 /* 
-  开始按钮样式
-  位于屏幕中央，带有霓虹灯效果和毛玻璃背景
-*/
-#start-btn {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);  /* 精确居中 */
-  padding: 16px 28px;                /* 内边距，使按钮更大 */
-  font-size: 18px;                   /* 字体大小 */
-  font-weight: bold;                 /* 粗体 */
-  cursor: pointer;                   /* 鼠标悬停时显示为手型 */
-  z-index: 100;                      /* 确保在最上层 */
-  
-  /* 半透明黑色背景 */
-  background: rgba(0, 0, 0, 0.4);
-  color: white;                      /* 白色文字 */
-  
-  /* 青色边框 */
-  border: 2px solid #00e0e0; 
-  border-radius: 8px;                /* 圆角边框 */
-  
-  /* 平滑过渡效果 */
-  transition: all 0.3s;
-  
-  /* 霓虹灯发光效果 - 青色和紫色阴影 */
-  box-shadow: 0 0 15px rgba(0, 224, 224, 0.6),  /* 青色阴影 */
-              0 0 25px rgba(176, 48, 192, 0.3);  /* 紫色阴影 */
-              
-  /* 毛玻璃效果 */
-  backdrop-filter: blur(5px);
-}
-
-/* 
-  开始按钮悬停效果
-  鼠标悬停时增强霓虹效果，并稍微放大按钮
-*/
-#start-btn:hover {
-  background: rgba(0, 0, 0, 0.6);       /* 更深的背景 */
-  
-  /* 增强的霓虹光效果 - 三色阴影 */
-  box-shadow: 0 0 20px rgba(0, 224, 224, 0.8),   /* 青色阴影 */
-              0 0 30px rgba(255, 138, 22, 0.5),   /* 橙色阴影 */
-              0 0 40px rgba(176, 48, 192, 0.4);  /* 紫色阴影 */
-              
-  /* 微小放大效果 */
-  transform: translate(-50%, -50%) scale(1.05);
-}
-
-/* 
   定义三色脉动动画
   创建颜色在青色、橙色和紫色之间循环变化的效果
 */
@@ -143,14 +93,6 @@ html, body {
 }
 
 /* 
-  应用三色脉动动画到开始按钮
-  一个完整循环需要6秒，无限循环
-*/
-#start-btn {
-  animation: threeColorPulse 6s infinite;  /* 6秒一个循环，无限重复 */
-}
-
-/* 
   手势状态指示器样式
   显示手部跟踪状态
 */
@@ -165,7 +107,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family:Arial, Helvetica, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 16px;
   font-weight: bold;
   z-index: 100;
@@ -246,5 +188,136 @@ html, body {
 /* 音频按钮悬停效果 */
 .audio-btn:hover {
   background: rgba(0, 0, 0, 0.8);
+  transform: scale(1.05);
+}
+
+/* 介绍面板样式 - 取代原本的模态窗口 */
+.intro-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  max-width: 600px;
+  padding: 30px;
+  z-index: 100;
+  
+  /* 半透明背景和毛玻璃效果 */
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 32px;
+  
+  /* 霓虹边框，匹配开始按钮 */
+  border: 2px solid #00e0e0;
+  
+  /* 阴影效果 */
+  box-shadow: 0 0 20px rgba(0, 224, 224, 0.6),
+              0 0 30px rgba(176, 48, 192, 0.3);
+  
+  /* 文本样式 */
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  
+  /* 动画 */
+  animation: threeColorPulse 6s infinite;
+}
+
+/* 标题样式 */
+.intro-panel h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  background: linear-gradient(to right, #00e0e0, #b030c0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 5px rgba(0, 224, 224, 0.3);
+}
+
+/* 功能区样式 */
+.feature-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  margin-bottom: 25px;
+}
+
+.feature {
+  flex: 1;
+  min-width: 200px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.feature-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.feature h3 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #00e0e0;
+}
+
+.feature p {
+  font-size: 14px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+/* 技术信息区域 */
+.tech-info {
+  font-size: 14px;
+  opacity: 0.8;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.tech-info p {
+  margin-bottom: 8px;
+}
+
+/* 开始按钮样式 */
+.start-button {
+  padding: 16px 28px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  
+  /* 半透明黑色背景 */
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+  
+  /* 青色边框 */
+  border: 2px solid #00e0e0; 
+  border-radius: 8px;
+  
+  /* 平滑过渡效果 */
+  transition: all 0.3s;
+  
+  /* 霓虹灯发光效果 - 青色和紫色阴影 */
+  box-shadow: 0 0 15px rgba(0, 224, 224, 0.6),
+              0 0 25px rgba(176, 48, 192, 0.3);
+              
+  /* 毛玻璃效果 */
+  backdrop-filter: blur(5px);
+}
+
+.start-button:hover {
+  background: rgba(0, 0, 0, 0.6);
+  
+  /* 增强的霓虹光效果 - 三色阴影 */
+  box-shadow: 0 0 20px rgba(0, 224, 224, 0.8),
+              0 0 30px rgba(255, 138, 22, 0.5),
+              0 0 40px rgba(176, 48, 192, 0.4);
+              
+  /* 微小放大效果 */
   transform: scale(1.05);
 }

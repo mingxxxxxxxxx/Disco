@@ -14,6 +14,7 @@ const backgroundCanvas = document.getElementById('background-canvas');
 const startBtn = document.getElementById('start-btn');
 const gestureIndicator = document.getElementById('gesture-indicator');
 const indicatorDot = document.querySelector('.indicator-dot');
+const introPanel = document.getElementById('intro-panel');
 
 // 创建一个隐藏的音频元素播放MP3
 const audioPlayer = document.createElement('audio');
@@ -68,6 +69,9 @@ document.addEventListener('DOMContentLoaded', function() {
   // 初始化手势控制器
   gestureController = new HandGestureController();
   
+  // 添加介绍面板动画效果
+  animateIntroPanel();
+  
   // 窗口大小调整
   window.addEventListener('resize', () => {
     updateThreeJsSize();
@@ -75,19 +79,49 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
+// 添加介绍面板动画效果
+function animateIntroPanel() {
+  // 淡入动画
+  gsap.from(introPanel, {
+    opacity: 0,
+    y: -20,
+    duration: 1,
+    ease: "power3.out"
+  });
+  
+  // 功能区域的交错动画效果
+  gsap.from('.feature', {
+    opacity: 0,
+    y: 20,
+    duration: 0.8,
+    stagger: 0.2,
+    delay: 0.4,
+    ease: "back.out(1.4)"
+  });
+  
+  // 添加轻微浮动效果
+  gsap.to(introPanel, {
+    y: 10,
+    duration: 3,
+    repeat: -1,
+    yoyo: true,
+    ease: "sine.inOut"
+  });
+}
+
 // 点击"Start"按钮激活音频和手势处理
 startBtn.addEventListener('click', async () => {
-  // 立即隐藏按钮
-  gsap.to(startBtn, {
+  // 立即隐藏整个介绍面板
+  gsap.to(introPanel, {
     opacity: 0,
-    scale: 0.8,
-    duration: 0.2,
+    scale: 0.95,
+    duration: 0.5,
     ease: "power2.out",
     onStart: () => {
       startBtn.disabled = true;
     },
     onComplete: () => {
-      startBtn.style.display = 'none';
+      introPanel.style.display = 'none';
     }
   });
   
@@ -529,7 +563,7 @@ function renderThreeJs() {
     }
     
     // 更新缩放因子
-    scaleFactor = 1 + smoothAudioLevel * 0.8;
+    scaleFactor = 1 + smoothAudioLevel * 0.5;
     
     // 更新背景淡出效果和着色器变量
     fade = Math.max(0, Math.min(1, smoothAudioLevel));
